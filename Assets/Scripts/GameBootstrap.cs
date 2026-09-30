@@ -29,18 +29,14 @@ public static class GameBootstrap
 
         EnsureLight();
 
-        // Player
-        GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        player.name = "Player";
-        Object.Destroy(player.GetComponent<Collider>()); // CharacterController provides its own collider
+        // Player: Finn the Human
+        var player = new GameObject("Player");
         player.transform.position = new Vector3(0f, 1.1f, 0f);
-        SetColor(player, new Color(0.2f, 0.45f, 0.95f));
-        player.AddComponent<CharacterController>();
+        var characterController = player.AddComponent<CharacterController>();
+        characterController.height = 2f;
+        characterController.radius = 0.35f;
         var controller = player.AddComponent<PlayerController>();
-
-        GameObject nose = CreateBlock("Nose", player.transform.position + new Vector3(0f, 0.4f, 0.45f),
-            new Vector3(0.5f, 0.2f, 0.3f), Color.white, player.transform);
-        Object.Destroy(nose.GetComponent<Collider>());
+        FinnModel.Build(player.transform, new Vector3(0f, -1f, 0f), baseMaterial); // feet at the bottom of the controller
 
         // Camera
         Camera cam = Camera.main;

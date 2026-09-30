@@ -1,6 +1,6 @@
-# Unity 3D Coin Collector
+# Adventure Time Fan Game (Unity)
 
-A small third-person 3D game made in Unity. Run around, jump up a spiral of floating platforms and collect every coin as fast as you can.
+A small third-person 3D fan game made in Unity, starring a low-poly Finn the Human built from code. Run around, jump up a spiral of floating platforms and collect every coin as fast as you can.
 
 ## How to open and play
 
@@ -32,12 +32,18 @@ Assets/Scripts/
   PlayerController.cs   Movement, sprinting, jumping and gravity (CharacterController)
   ThirdPersonCamera.cs  Mouse-orbit follow camera that avoids clipping through walls
   Coin.cs               Spinning, bobbing collectible
+  FinnModel.cs          Builds Finn (hat, face, shirt, shorts, backpack, limbs) from primitives
+  FinnAnimator.cs       Code-driven run / jump / idle animation for Finn
   GameInput.cs          Input wrapper that supports both the old and the new Input System
 ```
 
 ## Ideas for what to add next
 
-- Replace the capsule with a real character model and animations
+- Jake, Finn's sword, and Land of Ooo scenery
 - Enemies or moving obstacles
 - More levels, a main menu, sound effects and music
 - Moving platforms or a double jump
+
+---
+
+Adventure Time and its characters belong to Cartoon Network. This is a personal, non-commercial fan project.
