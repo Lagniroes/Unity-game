@@ -4,12 +4,17 @@ A small third-person 3D game made in Unity. Run around, jump up a spiral of floa
 
 ## How to open and play
 
-1. Install [Unity Hub](https://unity.com/download) and a **Unity 6** editor (2022.3 LTS or newer also works).
-2. In Unity Hub, click **Add → Add project from disk** and pick this folder.
-   (If Hub asks about the editor version, choose the one you have installed.)
-3. When the editor opens, press **Play** ▶. It works in any scene, even the default empty one,
-   because `GameBootstrap.cs` builds the level from code.
-   To keep it, save the scene with **File → Save As…** (for example `Assets/Scenes/Main.unity`).
+The easiest way is to let Unity create the project, then drop the scripts in:
+
+1. Install [Unity Hub](https://unity.com/download) and a Unity editor (Unity 6 or 2022.3 LTS).
+2. In Unity Hub click **New project**, pick the **3D** template (Universal 3D is fine too),
+   give it a name and click **Create project**.
+3. Download this repository (green **Code** button, then **Download ZIP**, on the
+   `claude/vigilant-fermat-eb7boo` branch) and unzip it.
+4. Copy the `Assets/Scripts` folder from the zip into your new project's `Assets` folder
+   (you can drag it into the **Project** window inside Unity).
+5. Wait for Unity to finish compiling, then press **Play** ▶. The level is built from code,
+   so it works in the default scene.
 
 ## Controls
 
