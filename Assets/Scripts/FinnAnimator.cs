@@ -2,7 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// Simple code-driven animation for FinnModel: swinging arms and legs while running,
-/// a jump pose in the air, and a little breathing bob while standing still.
+/// a jump pose in the air, a sword swing when attacking, falling over when knocked out,
+/// and a little breathing bob while standing still.
 /// </summary>
 public class FinnAnimator : MonoBehaviour
 {
@@ -18,12 +19,16 @@ public class FinnAnimator : MonoBehaviour
     public float blendSpeed = 12f;
 
     CharacterController controller;
+    PlayerCombat combat;
+    PlayerHealth health;
     float phase;
     Vector3 bodyRestPosition;
 
     void Awake()
     {
         controller = GetComponentInParent<CharacterController>();
+        combat = GetComponentInParent<PlayerCombat>();
+        health = GetComponentInParent<PlayerHealth>();
     }
 
     void Start()
@@ -78,6 +83,21 @@ public class FinnAnimator : MonoBehaviour
         Blend(leftArm, Quaternion.Euler(leftArmAngle, 0f, -armSpread), t);
         Blend(rightArm, Quaternion.Euler(rightArmAngle, 0f, armSpread), t);
         body.localPosition = Vector3.Lerp(body.localPosition, bodyRestPosition + bodyOffset, t);
+
+        // Sword swing overrides the right arm: wind up overhead, then chop down in front
+        float attack = combat ? combat.AttackProgress : -1f;
+        if (attack >= 0f)
+        {
+            float angle = attack < 0.3f
+                ? Mathf.Lerp(-40f, -170f, attack / 0.3f)
+                : Mathf.Lerp(-170f, 15f, 1f - Mathf.Pow(1f - (attack - 0.3f) / 0.7f, 3f));
+            rightArm.localRotation = Quaternion.Euler(angle, 0f, armSpread);
+        }
+
+        // Knocked out: fall over backwards
+        bool knockedOut = health && health.IsDead;
+        Quaternion pose = knockedOut ? Quaternion.Euler(-85f, 0f, 0f) : Quaternion.identity;
+        transform.localRotation = Quaternion.Slerp(transform.localRotation, pose, 1f - Mathf.Exp(-6f * Time.deltaTime));
     }
 
     static void Blend(Transform limb, Quaternion target, float t)

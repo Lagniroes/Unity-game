@@ -45,6 +45,9 @@ public static class GameInput
     public static bool RestartPressed => Kb != null && Kb.rKey.wasPressedThisFrame;
     public static bool UnlockCursorPressed => Kb != null && Kb.escapeKey.wasPressedThisFrame;
     public static bool LockCursorPressed => Ms != null && Ms.leftButton.wasPressedThisFrame;
+    public static bool AttackPressed =>
+        (Ms != null && Ms.leftButton.wasPressedThisFrame && Cursor.lockState == CursorLockMode.Locked) ||
+        (Kb != null && Kb.fKey.wasPressedThisFrame);
 #else
     public static Vector2 Move =>
         Vector2.ClampMagnitude(new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")), 1f);
@@ -56,5 +59,7 @@ public static class GameInput
     public static bool RestartPressed => Input.GetKeyDown(KeyCode.R);
     public static bool UnlockCursorPressed => Input.GetKeyDown(KeyCode.Escape);
     public static bool LockCursorPressed => Input.GetMouseButtonDown(0);
+    public static bool AttackPressed =>
+        (Input.GetMouseButtonDown(0) && Cursor.lockState == CursorLockMode.Locked) || Input.GetKeyDown(KeyCode.F);
 #endif
 }

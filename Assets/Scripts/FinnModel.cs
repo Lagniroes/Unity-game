@@ -15,6 +15,9 @@ public static class FinnModel
     public static readonly Color BackpackDark = new Color(0.22f, 0.5f, 0.17f);
     public static readonly Color Black = new Color(0.05f, 0.05f, 0.05f);
     public static readonly Color Mouth = new Color(0.35f, 0.08f, 0.08f);
+    public static readonly Color Gold = new Color(1f, 0.8f, 0.2f);
+    public static readonly Color DarkGold = new Color(0.75f, 0.55f, 0.1f);
+    public static readonly Color Handle = new Color(0.4f, 0.22f, 0.1f);
 
     static readonly Dictionary<Color, Material> materials = new Dictionary<Color, Material>();
     static Material baseMaterial;
@@ -53,6 +56,7 @@ public static class FinnModel
         // Arms hang from the shoulders
         Transform leftArm = Arm("ArmLeft", body, -1f);
         Transform rightArm = Arm("ArmRight", body, 1f);
+        Sword(rightArm);
 
         // Legs hang from the hips (not parented to the body so the feet stay planted when it bobs)
         Transform leftLeg = Leg("LegLeft", root, -1f);
@@ -75,6 +79,18 @@ public static class FinnModel
         Part("Arm", PrimitiveType.Cylinder, pivot, new Vector3(0f, -0.2f, 0f), new Vector3(0.08f, 0.18f, 0.08f), Skin);
         Part("Hand", PrimitiveType.Sphere, pivot, new Vector3(0f, -0.4f, 0f), new Vector3(0.11f, 0.11f, 0.11f), Skin);
         return pivot;
+    }
+
+    /// <summary>Finn's golden sword, held in the right hand. Its local Y axis runs along the blade.</summary>
+    static void Sword(Transform arm)
+    {
+        Transform grip = Pivot("Sword", arm, new Vector3(0f, -0.4f, 0f));
+        grip.localRotation = Quaternion.Euler(70f, 0f, 0f); // blade points forward and a little up
+        Part("Pommel", PrimitiveType.Sphere, grip, new Vector3(0f, -0.1f, 0f), new Vector3(0.07f, 0.07f, 0.07f), DarkGold);
+        Part("Handle", PrimitiveType.Cylinder, grip, new Vector3(0f, 0.01f, 0f), new Vector3(0.05f, 0.1f, 0.05f), Handle);
+        Part("Guard", PrimitiveType.Cube, grip, new Vector3(0f, 0.13f, 0f), new Vector3(0.3f, 0.05f, 0.07f), DarkGold);
+        Part("Blade", PrimitiveType.Cube, grip, new Vector3(0f, 0.55f, 0f), new Vector3(0.09f, 0.8f, 0.03f), Gold);
+        Part("Tip", PrimitiveType.Cube, grip, new Vector3(0f, 0.96f, 0f), new Vector3(0.064f, 0.064f, 0.03f), Gold);
     }
 
     static Transform Leg(string name, Transform parent, float side)

@@ -36,6 +36,8 @@ public static class GameBootstrap
         characterController.height = 2f;
         characterController.radius = 0.35f;
         var controller = player.AddComponent<PlayerController>();
+        player.AddComponent<PlayerHealth>();
+        player.AddComponent<PlayerCombat>();
         FinnModel.Build(player.transform, new Vector3(0f, -1f, 0f), baseMaterial); // feet at the bottom of the controller
 
         // Camera
@@ -51,6 +53,7 @@ public static class GameBootstrap
         // Game manager
         var manager = new GameObject("GameManager").AddComponent<GameManager>();
         manager.player = controller;
+        manager.baseMaterial = baseMaterial;
         manager.coinMaterial = new Material(baseMaterial) { color = new Color(1f, 0.82f, 0.1f) };
 
         // A ring of coins on the ground around the start
@@ -78,6 +81,14 @@ public static class GameBootstrap
         CreateBlock("Crate", new Vector3(-8f, 0.75f, 4f), new Vector3(1.5f, 1.5f, 1.5f), new Color(0.6f, 0.4f, 0.2f), level);
         CreateBlock("Crate", new Vector3(-9.5f, 1.5f, 6f), new Vector3(1.5f, 3f, 1.5f), new Color(0.6f, 0.4f, 0.2f), level);
         manager.AddCoinSpawn(new Vector3(-9.5f, 4f, 6f));
+
+        // Ooze mobs roaming the field
+        for (int i = 0; i < 7; i++)
+        {
+            float angle = (i * 360f / 7f + 20f) * Mathf.Deg2Rad;
+            float distance = i % 2 == 0 ? 18f : 24f;
+            manager.AddEnemySpawn(new Vector3(Mathf.Cos(angle) * distance, 0.1f, Mathf.Sin(angle) * distance));
+        }
 
         var random = new System.Random(42);
         for (int i = 0; i < 25; i++)

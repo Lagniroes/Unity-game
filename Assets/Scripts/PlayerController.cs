@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
     CharacterController controller;
     Vector3 spawnPoint;
     float verticalVelocity;
+    Vector3 knockback;
     float lastGroundedTime = float.NegativeInfinity;
 
     void Awake()
@@ -28,9 +29,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.HasWon) return;
-
-        Vector2 input = GameInput.Move;
+        bool gameOver = GameManager.Instance != null && GameManager.Instance.IsGameOver;
+        Vector2 input = gameOver ? Vector2.zero : GameInput.Move;
 
         Vector3 forward = cameraTransform ? cameraTransform.forward : Vector3.forward;
         Vector3 right = cameraTransform ? cameraTransform.right : Vector3.right;
@@ -50,7 +50,7 @@ public class PlayerController : MonoBehaviour
             if (verticalVelocity < 0f) verticalVelocity = -2f; // keep snapped to the ground
         }
 
-        if (GameInput.JumpPressed && Time.time - lastGroundedTime <= coyoteTime)
+        if (!gameOver && GameInput.JumpPressed && Time.time - lastGroundedTime <= coyoteTime)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
             lastGroundedTime = float.NegativeInfinity;
@@ -59,7 +59,8 @@ public class PlayerController : MonoBehaviour
         verticalVelocity += gravity * Time.deltaTime;
 
         float speed = GameInput.Sprint ? sprintSpeed : moveSpeed;
-        Vector3 velocity = move * speed + Vector3.up * verticalVelocity;
+        knockback = Vector3.MoveTowards(knockback, Vector3.zero, 20f * Time.deltaTime);
+        Vector3 velocity = move * speed + knockback + Vector3.up * verticalVelocity;
         controller.Move(velocity * Time.deltaTime);
 
         if (transform.position.y < fallResetY) Respawn();
@@ -72,5 +73,12 @@ public class PlayerController : MonoBehaviour
         transform.SetPositionAndRotation(spawnPoint, Quaternion.identity);
         controller.enabled = true;
         verticalVelocity = 0f;
+        knockback = Vector3.zero;
+    }
+
+    public void AddKnockback(Vector3 horizontal, float upward)
+    {
+        knockback = horizontal;
+        verticalVelocity = upward;
     }
 }
