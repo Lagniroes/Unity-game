@@ -13,6 +13,8 @@ using UnityEngine.InputSystem;
 /// </summary>
 public static class GameInput
 {
+    static bool CursorLocked => Cursor.lockState == CursorLockMode.Locked;
+
 #if USE_NEW_INPUT
     static Keyboard Kb => Keyboard.current;
     static Mouse Ms => Mouse.current;
@@ -45,9 +47,12 @@ public static class GameInput
     public static bool RestartPressed => Kb != null && Kb.rKey.wasPressedThisFrame;
     public static bool UnlockCursorPressed => Kb != null && Kb.escapeKey.wasPressedThisFrame;
     public static bool LockCursorPressed => Ms != null && Ms.leftButton.wasPressedThisFrame;
-    public static bool AttackPressed =>
-        (Ms != null && Ms.leftButton.wasPressedThisFrame && Cursor.lockState == CursorLockMode.Locked) ||
-        (Kb != null && Kb.fKey.wasPressedThisFrame);
+    public static bool LightAttackPressed =>
+        (Ms != null && CursorLocked && Ms.leftButton.wasPressedThisFrame) || (Kb != null && Kb.jKey.wasPressedThisFrame);
+    public static bool HeavyAttackPressed =>
+        (Ms != null && CursorLocked && Ms.rightButton.wasPressedThisFrame) || (Kb != null && Kb.kKey.wasPressedThisFrame);
+    public static bool DodgePressed =>
+        Kb != null && (Kb.leftCtrlKey.wasPressedThisFrame || Kb.qKey.wasPressedThisFrame);
 #else
     public static Vector2 Move =>
         Vector2.ClampMagnitude(new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")), 1f);
@@ -59,7 +64,10 @@ public static class GameInput
     public static bool RestartPressed => Input.GetKeyDown(KeyCode.R);
     public static bool UnlockCursorPressed => Input.GetKeyDown(KeyCode.Escape);
     public static bool LockCursorPressed => Input.GetMouseButtonDown(0);
-    public static bool AttackPressed =>
-        (Input.GetMouseButtonDown(0) && Cursor.lockState == CursorLockMode.Locked) || Input.GetKeyDown(KeyCode.F);
+    public static bool LightAttackPressed =>
+        (CursorLocked && Input.GetMouseButtonDown(0)) || Input.GetKeyDown(KeyCode.J);
+    public static bool HeavyAttackPressed =>
+        (CursorLocked && Input.GetMouseButtonDown(1)) || Input.GetKeyDown(KeyCode.K);
+    public static bool DodgePressed => Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.Q);
 #endif
 }

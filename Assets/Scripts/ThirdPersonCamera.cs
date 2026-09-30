@@ -1,27 +1,35 @@
 using UnityEngine;
 
 /// <summary>
-/// Mouse-orbit camera that follows a target and pulls in when something is in the way.
+/// Mouse-orbit camera that follows a target, pulls in when something is in the way,
+/// and can shake on big hits.
 /// </summary>
 public class ThirdPersonCamera : MonoBehaviour
 {
+    public static ThirdPersonCamera Instance { get; private set; }
+
     public Transform target;
-    public float distance = 8f;
-    public float minDistance = 3f;
-    public float maxDistance = 15f;
-    public float focusHeight = 1.5f;
+    public float distance = 6f;
+    public float minDistance = 2.5f;
+    public float maxDistance = 12f;
+    public float focusHeight = 1.4f;
     public float mouseSensitivity = 3f;
     public float minPitch = -20f;
     public float maxPitch = 75f;
 
     float yaw;
-    float pitch = 20f;
+    float pitch = 15f;
+    float shake;
+
+    void Awake() => Instance = this;
 
     void Start()
     {
         if (target) yaw = target.eulerAngles.y;
         LockCursor(true);
     }
+
+    public void Shake(float amount) => shake = Mathf.Max(shake, amount);
 
     void LateUpdate()
     {
@@ -47,7 +55,10 @@ public class ThirdPersonCamera : MonoBehaviour
         if (Physics.SphereCast(focus, 0.3f, direction, out RaycastHit hit, distance, ~0, QueryTriggerInteraction.Ignore))
             actualDistance = Mathf.Max(hit.distance, 0.5f);
 
-        transform.position = focus + direction * actualDistance;
+        shake = Mathf.MoveTowards(shake, 0f, Time.unscaledDeltaTime * 1.5f);
+        Vector3 shakeOffset = Random.insideUnitSphere * shake * shake * 0.5f;
+
+        transform.position = focus + direction * actualDistance + shakeOffset;
         transform.rotation = rotation;
     }
 

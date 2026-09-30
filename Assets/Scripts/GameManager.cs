@@ -2,150 +2,160 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Tracks coins, mobs, health, score and time, draws the HUD, and handles restarting.
+/// Fight state, hit-stop / slow motion, camera shake on hits, floating damage numbers,
+/// health bars, and the win / lose screens. Press R to restart.
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    const string BestTimeKey = "BestTime";
+    struct DamagePopup
+    {
+        public Vector3 position;
+        public string text;
+        public Color color;
+        public float startTime;
+    }
 
     public static GameManager Instance { get; private set; }
 
-    public PlayerController player;
-    public Material baseMaterial;
-    public Material coinMaterial;
+    public Combatant player;
+    public Combatant rival;
 
-    readonly List<Vector3> coinSpawns = new List<Vector3>();
-    readonly List<GameObject> activeCoins = new List<GameObject>();
-    readonly List<Vector3> enemySpawns = new List<Vector3>();
-    readonly List<Enemy> activeEnemies = new List<Enemy>();
-
-    PlayerHealth playerHealth;
-    int collected;
-    int mobsDefeated;
-    float elapsed;
-    float bestTime;
-    GUIStyle hudStyle;
+    readonly List<DamagePopup> popups = new List<DamagePopup>();
+    float slowUntil;
+    float slowScale = 1f;
+    float gameOverTime;
+    GUIStyle labelStyle;
     GUIStyle bigStyle;
     GUIStyle smallStyle;
+    GUIStyle popupStyle;
 
-    public bool HasWon { get; private set; }
-    public bool IsPlayerDead => playerHealth && playerHealth.IsDead;
-    public bool IsGameOver => HasWon || IsPlayerDead;
+    public bool IsGameOver => (player && player.IsDead) || (rival && rival.IsDead);
 
-    void Awake()
+    void Awake() => Instance = this;
+
+    void OnDestroy() => Time.timeScale = 1f;
+
+    public void Restart()
     {
-        Instance = this;
-        bestTime = PlayerPrefs.GetFloat(BestTimeKey, 0f);
+        Time.timeScale = 1f;
+        slowUntil = 0f;
+        popups.Clear();
+        GameBootstrap.SpawnFighters(this);
     }
 
-    public void AddCoinSpawn(Vector3 position) => coinSpawns.Add(position);
-    public void AddEnemySpawn(Vector3 position) => enemySpawns.Add(position);
-
-    public void StartGame()
+    /// <summary>Freezes the game for a moment so hits feel heavy.</summary>
+    public void HitStop(float duration)
     {
-        foreach (GameObject coin in activeCoins) Destroy(coin);
-        activeCoins.Clear();
-        foreach (Vector3 position in coinSpawns) SpawnCoin(position);
+        if (!IsGameOver) SlowMotion(duration, 0.05f); // the knockout slow-mo takes over on the final blow
+    }
 
-        foreach (Enemy enemy in activeEnemies)
-            if (enemy) Destroy(enemy.gameObject);
-        activeEnemies.Clear();
-        foreach (Vector3 position in enemySpawns)
-            activeEnemies.Add(Enemy.Create(position, baseMaterial, player));
+    public void SlowMotion(float duration, float scale)
+    {
+        if (duration <= 0f) return;
+        slowUntil = Mathf.Max(slowUntil, Time.unscaledTime + duration);
+        slowScale = Mathf.Min(scale, Time.timeScale < 1f ? slowScale : 1f);
+        Time.timeScale = slowScale;
+    }
 
-        collected = 0;
-        mobsDefeated = 0;
-        elapsed = 0f;
-        HasWon = false;
-        if (player)
+    public void OnHit(Combatant target, float damage)
+    {
+        popups.Add(new DamagePopup
         {
-            player.Respawn();
-            playerHealth = player.GetComponent<PlayerHealth>();
-            if (playerHealth) playerHealth.ResetHealth();
-        }
+            position = target.transform.position + Vector3.up * 1.9f + Random.insideUnitSphere * 0.3f,
+            text = Mathf.RoundToInt(damage).ToString(),
+            color = target == player ? new Color(1f, 0.3f, 0.3f) : Color.white,
+            startTime = Time.unscaledTime,
+        });
+
+        if (ThirdPersonCamera.Instance)
+            ThirdPersonCamera.Instance.Shake(Mathf.Clamp(damage / 25f, 0.25f, 1f) * (target == player ? 1f : 0.7f));
     }
 
-    void SpawnCoin(Vector3 position)
+    public void OnCombatantDied(Combatant who)
     {
-        GameObject coin = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        coin.name = "Coin";
-        Destroy(coin.GetComponent<Collider>());
-        coin.transform.SetPositionAndRotation(position, Quaternion.Euler(90f, 0f, 0f));
-        coin.transform.localScale = new Vector3(0.8f, 0.06f, 0.8f);
-        coin.GetComponent<Renderer>().sharedMaterial = coinMaterial;
-        coin.AddComponent<Coin>().Init(player ? player.transform : null);
-        activeCoins.Add(coin);
+        gameOverTime = Time.unscaledTime;
+        SlowMotion(1.2f, 0.25f); // dramatic slow-mo on the knockout
     }
-
-    public void CollectCoin(Coin coin)
-    {
-        if (IsGameOver) return;
-
-        activeCoins.Remove(coin.gameObject);
-        Destroy(coin.gameObject);
-        collected++;
-        if (playerHealth) playerHealth.Heal(1);
-
-        if (collected >= coinSpawns.Count)
-        {
-            HasWon = true;
-            if (bestTime <= 0f || elapsed < bestTime)
-            {
-                bestTime = elapsed;
-                PlayerPrefs.SetFloat(BestTimeKey, bestTime);
-            }
-        }
-    }
-
-    public void OnEnemyKilled() => mobsDefeated++;
 
     void Update()
     {
-        if (!IsGameOver) elapsed += Time.deltaTime;
-        if (GameInput.RestartPressed) StartGame();
+        if (Time.timeScale < 1f && Time.unscaledTime >= slowUntil) Time.timeScale = 1f;
+        if (GameInput.RestartPressed) Restart();
+        popups.RemoveAll(p => Time.unscaledTime - p.startTime > 0.9f);
     }
 
     void OnGUI()
     {
-        if (hudStyle == null)
+        if (labelStyle == null) CreateStyles();
+
+        if (player) DrawBar(new Rect(20, 20, 300, 28), player, new Color(0.3f, 0.85f, 0.35f), TextAnchor.MiddleLeft);
+        if (rival && !rival.IsDead)
         {
-            hudStyle = new GUIStyle(GUI.skin.label) { fontSize = 24, fontStyle = FontStyle.Bold };
-            hudStyle.normal.textColor = Color.white;
-            bigStyle = new GUIStyle(hudStyle) { fontSize = 48, alignment = TextAnchor.MiddleCenter };
-            smallStyle = new GUIStyle(hudStyle) { fontSize = 16 };
+            float width = Mathf.Min(500f, Screen.width - 40f);
+            DrawBar(new Rect((Screen.width - width) / 2f, 60, width, 22), rival, new Color(0.85f, 0.2f, 0.2f), TextAnchor.MiddleCenter);
+            GUI.Label(new Rect(0, 28, Screen.width, 30), rival.displayName.ToUpperInvariant(), new GUIStyle(labelStyle) { alignment = TextAnchor.MiddleCenter });
         }
 
-        DrawHealthBar(new Rect(20, 20, 260, 26));
+        DrawPopups();
 
-        string best = bestTime > 0f ? $"   Best: {bestTime:0.0}s" : "";
-        GUI.Label(new Rect(20, 55, 600, 40), $"Coins: {collected} / {coinSpawns.Count}   Mobs defeated: {mobsDefeated}", hudStyle);
-        GUI.Label(new Rect(20, 90, 600, 40), $"Time: {elapsed:0.0}s{best}", hudStyle);
-        GUI.Label(new Rect(20, Screen.height - 45, 1000, 40),
-            "WASD move · Mouse look · Space jump · Shift sprint · Left click / F attack · R restart · Esc free cursor",
+        GUI.Label(new Rect(20, Screen.height - 40, 1200, 30),
+            "WASD move · Mouse look · Shift sprint · Space jump · Left click/J light combo · Right click/K heavy · Ctrl/Q dodge · R restart · Esc cursor",
             smallStyle);
 
-        var center = new Rect(0, Screen.height / 2f - 60, Screen.width, 120);
-        if (HasWon)
-            GUI.Label(center, $"You collected every coin!\n{elapsed:0.0}s — press R to play again", bigStyle);
-        else if (IsPlayerDead)
-            GUI.Label(center, "Finn got knocked out!\nPress R to try again", bigStyle);
+        if (!IsGameOver || Time.unscaledTime - gameOverTime < 0.8f) return;
+        var center = new Rect(0, Screen.height / 2f - 90, Screen.width, 120);
+        var hint = new Rect(0, Screen.height / 2f + 30, Screen.width, 40);
+        if (player && player.IsDead)
+        {
+            bigStyle.normal.textColor = new Color(0.85f, 0.1f, 0.1f);
+            GUI.Label(center, "WASTED", bigStyle);
+        }
+        else
+        {
+            bigStyle.normal.textColor = new Color(1f, 0.8f, 0.2f);
+            GUI.Label(center, "RIVAL DOWN", bigStyle);
+        }
+        GUI.Label(hint, "Press R to fight again", new GUIStyle(labelStyle) { alignment = TextAnchor.MiddleCenter });
     }
 
-    void DrawHealthBar(Rect rect)
+    void CreateStyles()
     {
-        if (!playerHealth) return;
+        labelStyle = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold };
+        labelStyle.normal.textColor = Color.white;
+        bigStyle = new GUIStyle(labelStyle) { fontSize = 90, alignment = TextAnchor.MiddleCenter };
+        smallStyle = new GUIStyle(labelStyle) { fontSize = 14 };
+        popupStyle = new GUIStyle(labelStyle) { fontSize = 26, alignment = TextAnchor.MiddleCenter };
+    }
 
-        float fraction = (float)playerHealth.Current / playerHealth.maxHealth;
-        Color fillColor = Color.Lerp(new Color(0.9f, 0.15f, 0.15f), new Color(0.3f, 0.85f, 0.3f), fraction);
-
+    void DrawBar(Rect rect, Combatant who, Color fillColor, TextAnchor alignment)
+    {
+        float fraction = who.Health / who.maxHealth;
         Color previous = GUI.color;
-        GUI.color = new Color(0f, 0f, 0f, 0.7f);
+        GUI.color = new Color(0f, 0f, 0f, 0.75f);
         GUI.DrawTexture(rect, Texture2D.whiteTexture);
         GUI.color = fillColor;
         GUI.DrawTexture(new Rect(rect.x + 3, rect.y + 3, (rect.width - 6) * fraction, rect.height - 6), Texture2D.whiteTexture);
         GUI.color = previous;
 
-        var label = new GUIStyle(smallStyle) { alignment = TextAnchor.MiddleCenter };
-        GUI.Label(rect, $"HP {playerHealth.Current} / {playerHealth.maxHealth}", label);
+        string text = who == player ? $"  {who.displayName}  {Mathf.CeilToInt(who.Health)} / {who.maxHealth:0}" : $"{Mathf.CeilToInt(who.Health)}";
+        GUI.Label(rect, text, new GUIStyle(smallStyle) { alignment = alignment });
+    }
+
+    void DrawPopups()
+    {
+        Camera cam = Camera.main;
+        if (!cam) return;
+
+        Color previous = GUI.color;
+        foreach (DamagePopup popup in popups)
+        {
+            float age = Time.unscaledTime - popup.startTime;
+            Vector3 screen = cam.WorldToScreenPoint(popup.position + Vector3.up * age * 1.2f);
+            if (screen.z < 0f) continue;
+
+            GUI.color = new Color(popup.color.r, popup.color.g, popup.color.b, 1f - age / 0.9f);
+            GUI.Label(new Rect(screen.x - 50, Screen.height - screen.y - 20, 100, 40), popup.text, popupStyle);
+        }
+        GUI.color = previous;
     }
 }
