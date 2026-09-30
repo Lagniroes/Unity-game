@@ -2,19 +2,30 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// References to a rat's body parts (filled in by RatModel) and its own materials,
+/// References to a rat's joints (filled in by RatModel) and its own materials,
 /// so the whole rat can flash white when hit.
 /// </summary>
 public class RatRig : MonoBehaviour
 {
-    public Transform upper;
+    [System.Serializable]
+    public class Limb
+    {
+        public Transform upper;   // hip or shoulder
+        public Transform middle;  // knee or elbow
+        public Transform end;     // ankle or wrist
+    }
+
+    public Transform roll;        // pivot at the belly, spun for forward rolls
+    public Transform hips;        // pelvis; everything above the legs
+    public Transform chest;
     public Transform head;
-    public Transform leftArm;
-    public Transform rightArm;
-    public Transform leftLeg;
-    public Transform rightLeg;
+    public Limb leftLeg = new Limb();
+    public Limb rightLeg = new Limb();
+    public Limb leftArm = new Limb();
+    public Limb rightArm = new Limb();
     public Transform weapon;
     public Transform[] tail;
+    public float rollPivotHeight;
 
     readonly Dictionary<Color, Material> materials = new Dictionary<Color, Material>();
     float flashUntil;

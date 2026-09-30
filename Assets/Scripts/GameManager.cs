@@ -99,7 +99,7 @@ public class GameManager : MonoBehaviour
         DrawPopups();
 
         GUI.Label(new Rect(20, Screen.height - 40, 1200, 30),
-            "WASD move · Mouse look · Shift sprint · Space jump · Left click/J light combo · Right click/K heavy · Ctrl/Q dodge · R restart · Esc cursor",
+            "WASD walk · Hold Shift run · Space jump · Shift+Space roll · Left click/J light combo · Right click/K heavy · R restart · Esc cursor",
             smallStyle);
 
         if (!IsGameOver || Time.unscaledTime - gameOverTime < 0.8f) return;

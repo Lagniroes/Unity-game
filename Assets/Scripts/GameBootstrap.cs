@@ -60,12 +60,18 @@ public static class GameBootstrap
         RatModel.Build(go.transform, new RatOutfit
         {
             fur = new Color(0.55f, 0.55f, 0.58f),       // grey street rat
+            furLight = new Color(0.78f, 0.77f, 0.76f),
             skin = new Color(0.95f, 0.65f, 0.68f),
             shirt = new Color(0.95f, 0.95f, 0.93f),     // white tank top
+            tankTop = true,
             pants = new Color(0.2f, 0.32f, 0.55f),      // jeans
             cap = true,
-            capColor = new Color(0.8f, 0.12f, 0.1f),
+            capColor = new Color(0.8f, 0.12f, 0.1f),    // backwards red cap
             goldChain = true,
+            earring = true,
+            sneakers = true,
+            sneakerColor = new Color(0.8f, 0.12f, 0.1f),
+            handWraps = true,
             weapon = RatWeapon.Crowbar,
         }, 1f);
         return combatant;
@@ -89,11 +95,13 @@ public static class GameBootstrap
         RatModel.Build(go.transform, new RatOutfit
         {
             fur = new Color(0.42f, 0.3f, 0.2f),         // brown sewer rat
+            furLight = new Color(0.62f, 0.5f, 0.38f),
             skin = new Color(0.9f, 0.6f, 0.6f),
             shirt = new Color(0.2f, 0.45f, 0.25f),      // green hoodie
-            pants = new Color(0.12f, 0.12f, 0.14f),
-            sleeves = true,
             hood = true,
+            pants = new Color(0.12f, 0.12f, 0.14f),     // black cargo pants, bare clawed feet
+            scar = true,
+            goldTooth = true,
             weapon = RatWeapon.Pipe,
         }, scale);
         return combatant;

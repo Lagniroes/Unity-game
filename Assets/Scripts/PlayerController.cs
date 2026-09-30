@@ -1,21 +1,27 @@
 using UnityEngine;
 
 /// <summary>
-/// Player rat: camera-relative movement, sprint, jump, dodge roll, and attack input.
+/// Player rat: walks by default, runs while holding Shift, jumps with Space, and does a
+/// forward roll with Shift + Space (or Ctrl / Q). Also sends attack input to the MeleeAttacker.
 /// </summary>
 [RequireComponent(typeof(CharacterController), typeof(Combatant), typeof(MeleeAttacker))]
 public class PlayerController : MonoBehaviour
 {
-    public float moveSpeed = 5f;
-    public float sprintSpeed = 8.5f;
+    public float walkSpeed = 2.3f;
+    public float runSpeed = 6.5f;
+    public float acceleration = 10f;         // how quickly speed changes (higher = snappier)
     public float attackMoveFactor = 0.2f;
-    public float jumpHeight = 1.3f;
+    public float jumpHeight = 1.2f;
     public float gravity = -22f;
-    public float turnSpeed = 14f;
+    public float turnSpeed = 10f;
     public float coyoteTime = 0.12f;
-    public float dodgeSpeed = 13f;
-    public float dodgeDuration = 0.28f;
-    public float dodgeCooldown = 0.6f;
+
+    [Header("Roll")]
+    public float rollSpeed = 8.5f;
+    public float rollDuration = 0.6f;
+    public float rollInvulnerableTime = 0.4f;
+    public float rollCooldown = 0.25f;       // after the roll ends
+
     public float fallResetY = -15f;
     public Transform cameraTransform;
 
@@ -23,12 +29,13 @@ public class PlayerController : MonoBehaviour
     Combatant combatant;
     MeleeAttacker attacker;
     Vector3 spawnPoint;
+    Vector3 planarVelocity;
     float verticalVelocity;
     float lastGroundedTime = float.NegativeInfinity;
-    float dodgeStart = -10f;
-    Vector3 dodgeDirection;
+    float rollEndTime = -10f;
+    Vector3 rollDirection;
 
-    bool IsDodging => Time.time - dodgeStart < dodgeDuration;
+    public bool IsRunning { get; private set; }
 
     void Awake()
     {
@@ -42,6 +49,7 @@ public class PlayerController : MonoBehaviour
     {
         bool gameOver = GameManager.Instance && GameManager.Instance.IsGameOver;
         bool canAct = !gameOver && !combatant.IsDead && !combatant.IsStunned;
+        bool rolling = combatant.IsDodging;
 
         Vector2 input = canAct ? GameInput.Move : Vector2.zero;
         Vector3 forward = cameraTransform ? cameraTransform.forward : Vector3.forward;
@@ -49,60 +57,78 @@ public class PlayerController : MonoBehaviour
         forward.y = 0f;
         right.y = 0f;
         Vector3 move = forward.normalized * input.y + right.normalized * input.x;
+        bool hasInput = move.sqrMagnitude > 0.01f;
 
-        if (canAct)
+        if (controller.isGrounded) lastGroundedTime = Time.time;
+        bool grounded = Time.time - lastGroundedTime <= coyoteTime;
+
+        IsRunning = canAct && GameInput.Sprint && hasInput && !attacker.IsAttacking;
+
+        if (canAct && !rolling)
         {
-            if (GameInput.DodgePressed && !IsDodging && Time.time - dodgeStart >= dodgeCooldown)
+            bool rollInput = GameInput.DodgePressed || (GameInput.Sprint && GameInput.JumpPressed);
+            if (rollInput && grounded && Time.time - rollEndTime >= rollCooldown)
             {
-                dodgeStart = Time.time;
-                dodgeDirection = move.sqrMagnitude > 0.01f ? move.normalized : -transform.forward; // no input: hop back
-                attacker.Cancel();
-                combatant.StartDodge(dodgeDuration);
+                StartRoll(hasInput ? move.normalized : transform.forward);
+                rolling = true;
             }
-            else if (!IsDodging)
+            else
             {
                 if (GameInput.LightAttackPressed) attacker.TryAttack(AttackKind.Light, move);
                 if (GameInput.HeavyAttackPressed) attacker.TryAttack(AttackKind.Heavy, move);
+
+                if (GameInput.JumpPressed && grounded && !attacker.IsAttacking)
+                {
+                    verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                    lastGroundedTime = float.NegativeInfinity;
+                }
             }
         }
 
-        Vector3 horizontal;
-        if (IsDodging)
+        // Horizontal movement
+        if (rolling)
         {
-            horizontal = dodgeDirection * dodgeSpeed;
+            // Fast at the start of the roll, slowing as the rat comes out of it
+            float progress = Mathf.Clamp01(combatant.DodgeProgress);
+            planarVelocity = rollDirection * rollSpeed * Mathf.Lerp(1f, 0.55f, progress);
+            transform.rotation = Quaternion.LookRotation(rollDirection);
+            rollEndTime = Time.time;
+            // Keep running out of the roll if Shift is still held
+            if (progress > 0.85f && GameInput.Sprint && hasInput) planarVelocity = Vector3.Lerp(planarVelocity, move * runSpeed, 0.5f);
         }
         else if (attacker.IsAttacking)
         {
-            horizontal = move * moveSpeed * attackMoveFactor + attacker.LungeVelocity;
+            planarVelocity = move * walkSpeed * attackMoveFactor + attacker.LungeVelocity;
         }
         else
         {
-            float speed = GameInput.Sprint ? sprintSpeed : moveSpeed;
-            horizontal = move * speed;
-            if (move.sqrMagnitude > 0.001f)
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(move), turnSpeed * Time.deltaTime);
+            Vector3 target = move * (IsRunning ? runSpeed : walkSpeed);
+            // Smooth acceleration keeps the walk steady instead of jerky
+            planarVelocity = Vector3.MoveTowards(planarVelocity, target, acceleration * (grounded ? 1f : 0.4f) * Time.deltaTime);
+            if (hasInput)
+            {
+                float turn = IsRunning ? turnSpeed : turnSpeed * 0.8f;
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(move), turn * Time.deltaTime);
+            }
         }
 
-        if (controller.isGrounded)
-        {
-            lastGroundedTime = Time.time;
-            if (verticalVelocity < 0f) verticalVelocity = -2f;
-        }
-
-        bool canJump = canAct && !IsDodging && !attacker.IsAttacking;
-        if (canJump && GameInput.JumpPressed && Time.time - lastGroundedTime <= coyoteTime)
-        {
-            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            lastGroundedTime = float.NegativeInfinity;
-        }
-
+        // Vertical movement
+        if (controller.isGrounded && verticalVelocity < 0f) verticalVelocity = -2f;
         float launch = combatant.ConsumeLaunch();
         if (launch > 0f) verticalVelocity = launch;
         verticalVelocity += gravity * Time.deltaTime;
 
-        controller.Move((horizontal + combatant.Knockback + Vector3.up * verticalVelocity) * Time.deltaTime);
+        controller.Move((planarVelocity + combatant.Knockback + Vector3.up * verticalVelocity) * Time.deltaTime);
 
         if (transform.position.y < fallResetY) Respawn();
+    }
+
+    void StartRoll(Vector3 direction)
+    {
+        rollDirection = direction;
+        attacker.Cancel();
+        combatant.StartDodge(rollDuration, rollInvulnerableTime);
+        transform.rotation = Quaternion.LookRotation(direction);
     }
 
     public void Respawn()
@@ -112,5 +138,6 @@ public class PlayerController : MonoBehaviour
         transform.position = spawnPoint;
         controller.enabled = true;
         verticalVelocity = 0f;
+        planarVelocity = Vector3.zero;
     }
 }

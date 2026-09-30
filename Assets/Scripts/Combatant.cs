@@ -20,13 +20,16 @@ public class Combatant : MonoBehaviour
     public bool IsDead => Health <= 0f;
     public bool IsStunned => Time.time < stunnedUntil;
     public bool IsInvulnerable => Time.time < invulnerableUntil;
-    public bool IsDodging => Time.time < dodgingUntil;
+    public bool IsDodging => Time.time < dodgeStart + dodgeDuration;
+    /// <summary>0..1 through the current dodge roll, or -1 when not rolling.</summary>
+    public float DodgeProgress => IsDodging ? (Time.time - dodgeStart) / dodgeDuration : -1f;
     public bool IsArmored => Time.time < armorUntil;
     public Vector3 Knockback { get; private set; }
 
     float stunnedUntil;
     float invulnerableUntil;
-    float dodgingUntil;
+    float dodgeStart = -10f;
+    float dodgeDuration = 0.01f;
     float armorUntil;
     float lastStunTime = -10f;
     int stunChain;
@@ -50,10 +53,11 @@ public class Combatant : MonoBehaviour
         Knockback = Vector3.MoveTowards(Knockback, Vector3.zero, knockbackDecay * Time.deltaTime);
     }
 
-    public void StartDodge(float duration)
+    public void StartDodge(float duration, float invulnerableTime)
     {
-        dodgingUntil = Time.time + duration;
-        invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + duration + 0.05f);
+        dodgeStart = Time.time;
+        dodgeDuration = Mathf.Max(duration, 0.01f);
+        invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + invulnerableTime);
     }
 
     /// <summary>Upward velocity from the last hit; returns it once and clears it.</summary>
@@ -83,6 +87,7 @@ public class Combatant : MonoBehaviour
             Knockback = away * knockback;
             pendingLaunch = launch;
             stunnedUntil = Time.time + stun;
+            dodgeStart = -10f; // getting hit ends a roll
 
             stunChain = Time.time - lastStunTime < 1.5f ? stunChain + 1 : 1;
             lastStunTime = Time.time;

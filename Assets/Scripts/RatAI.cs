@@ -8,7 +8,7 @@ using UnityEngine;
 public class RatAI : MonoBehaviour
 {
     public Combatant target;
-    public float runSpeed = 4.2f;
+    public float runSpeed = 5.5f;
     public float strafeSpeed = 1.6f;
     public float detectRange = 30f;
     public float engageRange = 2.1f;

@@ -18,13 +18,14 @@ project has no art assets.
 
 | Key | Action |
 | --- | --- |
-| W A S D | Move |
-| Mouse | Look around (scroll to zoom) |
-| Left Shift | Sprint |
+| W A S D | Walk |
+| Hold Left Shift | Run |
 | Space | Jump |
+| Shift + Space | Forward roll (invincible for most of the roll) |
+| Mouse | Look around (scroll to zoom) |
 | Left click / J | Light attack (tap for a 3-hit combo) |
 | Right click / K | Heavy attack (slow, big damage and knockback) |
-| Left Ctrl / Q | Dodge roll (invincible during the roll) |
+| Left Ctrl / Q | Forward roll (same as Shift + Space) |
 | R | Restart the fight |
 | Esc / left click | Free / lock the mouse cursor |
 
@@ -35,7 +36,7 @@ project has no art assets.
 - **Heavy attack:** a long windup, then a big overhead smash.
 - **Soft auto-aim:** you turn toward the nearest enemy when you start an attack.
 - **Hit reactions:** hit-stun (interrupts attacks), knockback, a white flash, hit-stop, screen shake and floating damage numbers.
-- **Dodge:** a quick dash with invincibility frames. It cancels your current attack.
+- **Roll:** a tucked forward roll with invincibility frames. It cancels your current attack, and you keep running out of it if Shift is held.
 - **Anti stun-lock:** after several stuns in a row, the rival gets armor for a moment and fights back.
 - **Rival AI:** runs at you, circles at fighting range, and mixes light combos with heavy attacks. It gets more aggressive below 40% HP.
 
@@ -46,9 +47,9 @@ Assets/Scripts/
   GameBootstrap.cs      Creates the camera, city, player rat and rival rat when Play starts
   GameManager.cs        Fight state, HUD/health bars, damage numbers, hit-stop, slow-mo, restart
   CityBuilder.cs        Streets, sidewalks, buildings, streetlights, cars, dumpsters, sunset lighting
-  RatModel.cs           Builds a rat (outfit, crowbar or pipe, tail) from primitives
-  RatRig.cs             A rat's body-part references and hit flash
-  RatAnimator.cs        Procedural animation: stance, run, jump, swings, stun, dodge, KO, tail
+  RatModel.cs           Builds a detailed rat (face, knees/elbows, fists, outfit, weapon, ringed tail)
+  RatRig.cs             A rat's joint references and hit flash
+  RatAnimator.cs        Procedural animation: stance, walk/run cycles, jump, swings, stun, roll, KO, tail
   Combatant.cs          Health, hit-stun, knockback, invincibility, anti stun-lock armor
   MeleeAttacker.cs      Attack data, combos, input buffering, auto-aim, hit detection
   PlayerController.cs   Player movement, jump, dodge and attack input

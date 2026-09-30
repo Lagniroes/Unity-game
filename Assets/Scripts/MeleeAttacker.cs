@@ -9,16 +9,22 @@ public struct AttackPose
     public float armPitch;   // right arm rotation around X (negative = raised forward/up)
     public float twist;      // upper body turn around Y
     public float lean;       // upper body lean around X (positive = forward)
+    public float elbow;      // right elbow bend in degrees
 
-    public AttackPose(float armPitch, float twist, float lean)
+    /// <summary>Fighting stance the swings start from and return to.</summary>
+    public static readonly AttackPose Rest = new AttackPose(-30f, 0f, 0f, 50f);
+
+    public AttackPose(float armPitch, float twist, float lean, float elbow)
     {
         this.armPitch = armPitch;
         this.twist = twist;
         this.lean = lean;
+        this.elbow = elbow;
     }
 
     public static AttackPose Lerp(AttackPose a, AttackPose b, float t) => new AttackPose(
-        Mathf.Lerp(a.armPitch, b.armPitch, t), Mathf.Lerp(a.twist, b.twist, t), Mathf.Lerp(a.lean, b.lean, t));
+        Mathf.Lerp(a.armPitch, b.armPitch, t), Mathf.Lerp(a.twist, b.twist, t),
+        Mathf.Lerp(a.lean, b.lean, t), Mathf.Lerp(a.elbow, b.elbow, t));
 }
 
 [System.Serializable]
@@ -191,13 +197,13 @@ public class MeleeAttacker : MonoBehaviour
     /// <summary>Pose for the animator at this moment of the attack.</summary>
     public AttackPose GetPose()
     {
-        if (current == null) return default;
+        if (current == null) return AttackPose.Rest;
 
         float t = Elapsed;
         if (t < Windup)
         {
             float k = t / Mathf.Max(Windup, 0.0001f);
-            return AttackPose.Lerp(default, current.windupPose, 1f - (1f - k) * (1f - k));
+            return AttackPose.Lerp(AttackPose.Rest, current.windupPose, 1f - (1f - k) * (1f - k));
         }
         t -= Windup;
         if (t < current.active)
@@ -207,7 +213,7 @@ public class MeleeAttacker : MonoBehaviour
         }
         t -= current.active;
         float r = Mathf.Clamp01(t / Mathf.Max(current.recovery, 0.0001f));
-        return AttackPose.Lerp(current.strikePose, default, r * r);
+        return AttackPose.Lerp(current.strikePose, AttackPose.Rest, r * r);
     }
 
     public static AttackData[] DefaultLightCombo() => new[]
@@ -216,19 +222,19 @@ public class MeleeAttacker : MonoBehaviour
         {
             name = "Swing", windup = 0.16f, active = 0.1f, recovery = 0.22f, damage = 10f,
             knockback = 4f, stun = 0.35f, lunge = 3f,
-            windupPose = new AttackPose(-150f, 40f, -5f), strikePose = new AttackPose(-20f, -30f, 15f),
+            windupPose = new AttackPose(-150f, 40f, -5f, 70f), strikePose = new AttackPose(-20f, -30f, 15f, 5f),
         },
         new AttackData
         {
             name = "Backhand", windup = 0.14f, active = 0.1f, recovery = 0.22f, damage = 10f,
             knockback = 4f, stun = 0.35f, lunge = 3f,
-            windupPose = new AttackPose(-100f, -50f, 0f), strikePose = new AttackPose(-70f, 60f, 10f),
+            windupPose = new AttackPose(-100f, -50f, 0f, 90f), strikePose = new AttackPose(-70f, 60f, 10f, 10f),
         },
         new AttackData
         {
             name = "Slam", windup = 0.26f, active = 0.1f, recovery = 0.4f, damage = 18f,
             knockback = 9f, launch = 4f, stun = 0.6f, lunge = 5f, hitStop = 0.09f,
-            windupPose = new AttackPose(-175f, 10f, -15f), strikePose = new AttackPose(5f, 0f, 30f),
+            windupPose = new AttackPose(-175f, 10f, -15f, 60f), strikePose = new AttackPose(5f, 0f, 30f, 0f),
         },
     };
 
@@ -236,6 +242,6 @@ public class MeleeAttacker : MonoBehaviour
     {
         name = "Heavy", windup = 0.5f, active = 0.12f, recovery = 0.5f, damage = 28f, range = 2.2f,
         knockback = 12f, launch = 5f, stun = 0.8f, lunge = 6f, hitStop = 0.12f,
-        windupPose = new AttackPose(-180f, 30f, -25f), strikePose = new AttackPose(15f, -10f, 35f),
+        windupPose = new AttackPose(-180f, 30f, -25f, 100f), strikePose = new AttackPose(15f, -10f, 35f, 0f),
     };
 }
