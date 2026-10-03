@@ -48,7 +48,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         bool gameOver = GameManager.Instance && GameManager.Instance.IsGameOver;
-        bool canAct = !gameOver && !combatant.IsDead && !combatant.IsStunned;
+        bool canAct = !gameOver && !combatant.IsDead && !combatant.IsStunned && !OfficeScene.Viewing;
         bool rolling = combatant.IsDodging;
 
         Vector2 input = canAct ? GameInput.Move : Vector2.zero;

@@ -53,6 +53,7 @@ public static class GameInput
         (Ms != null && CursorLocked && Ms.rightButton.wasPressedThisFrame) || (Kb != null && Kb.kKey.wasPressedThisFrame);
     public static bool DodgePressed =>
         Kb != null && (Kb.leftCtrlKey.wasPressedThisFrame || Kb.qKey.wasPressedThisFrame);
+    public static bool OfficeTogglePressed => Kb != null && Kb.oKey.wasPressedThisFrame;
 #else
     public static Vector2 Move =>
         Vector2.ClampMagnitude(new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")), 1f);
@@ -69,5 +70,6 @@ public static class GameInput
     public static bool HeavyAttackPressed =>
         (CursorLocked && Input.GetMouseButtonDown(1)) || Input.GetKeyDown(KeyCode.K);
     public static bool DodgePressed => Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.Q);
+    public static bool OfficeTogglePressed => Input.GetKeyDown(KeyCode.O);
 #endif
 }

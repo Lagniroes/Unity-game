@@ -86,6 +86,7 @@ public class GameManager : MonoBehaviour
 
     void OnGUI()
     {
+        if (OfficeScene.Viewing) return; // the office draws its own overlay
         if (labelStyle == null) CreateStyles();
 
         if (player) DrawBar(new Rect(20, 20, 300, 28), player, new Color(0.3f, 0.85f, 0.35f), TextAnchor.MiddleLeft);
@@ -99,7 +100,7 @@ public class GameManager : MonoBehaviour
         DrawPopups();
 
         GUI.Label(new Rect(20, Screen.height - 40, 1200, 30),
-            "WASD walk · Hold Shift run · Space jump · Shift+Space roll · Left click/J light combo · Right click/K heavy · R restart · Esc cursor",
+            "WASD walk · Hold Shift run · Space jump · Shift+Space roll · Left click/J light combo · Right click/K heavy · R restart · O office · Esc cursor",
             smallStyle);
 
         if (!IsGameOver || Time.unscaledTime - gameOverTime < 0.8f) return;

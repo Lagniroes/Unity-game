@@ -12,6 +12,10 @@ public struct RatOutfit
     public Color pants;
     public bool tankTop;        // bare furry shoulders and arms
     public bool hood;           // hoodie: sleeves, hood, drawstrings, front pocket
+    public bool sleeves;        // long shirt sleeves (office shirt)
+    public bool tie;            // shirt collar and necktie
+    public Color tieColor;
+    public bool glasses;
     public bool cap;
     public Color capColor;
     public bool goldChain;
@@ -48,7 +52,8 @@ public static class RatModel
     const float HipHeight = 0.62f;
     const float RollHeight = 0.55f;
 
-    public static RatRig Build(Transform parent, RatOutfit outfit, float scale)
+    /// <param name="animate">Adds the gameplay RatAnimator. Pass false when another script poses the rat.</param>
+    public static RatRig Build(Transform parent, RatOutfit outfit, float scale, bool animate = true)
     {
         Transform root = Shapes.Pivot("RatModel", parent, Vector3.zero);
         root.localScale = Vector3.one * scale;
@@ -85,7 +90,7 @@ public static class RatModel
             else Pipe(grip, rig);
         }
 
-        root.gameObject.AddComponent<RatAnimator>();
+        if (animate) root.gameObject.AddComponent<RatAnimator>();
         return rig;
     }
 
@@ -220,6 +225,19 @@ public static class RatModel
 
         Shapes.Create(PrimitiveType.Cylinder, "Neck", chest, new Vector3(0f, 0.43f, 0.01f), new Vector3(0.17f, 0.06f, 0.17f), fur);
 
+        if (o.tie)
+        {
+            Material collar = rig.Mat(Rubber);
+            Material tie = rig.Mat(o.tieColor);
+            for (int s = -1; s <= 1; s += 2)
+                Shapes.Create(PrimitiveType.Cube, "Collar", chest, new Vector3(0.05f * s, 0.41f, 0.12f), Quaternion.Euler(-20f, 0f, 35f * s), new Vector3(0.09f, 0.045f, 0.02f), collar);
+            Shapes.Create(PrimitiveType.Cube, "TieKnot", chest, new Vector3(0f, 0.385f, 0.15f), Quaternion.Euler(-15f, 0f, 0f), new Vector3(0.05f, 0.045f, 0.03f), tie);
+            Shapes.Create(PrimitiveType.Cube, "Tie", chest, new Vector3(0f, 0.24f, 0.2f), Quaternion.Euler(-14f, 0f, 0f), new Vector3(0.065f, 0.26f, 0.015f), tie);
+            Shapes.Create(PrimitiveType.Cube, "TieTip", chest, new Vector3(0f, 0.105f, 0.235f), Quaternion.Euler(-14f, 0f, 45f), new Vector3(0.046f, 0.046f, 0.015f), tie);
+            for (int i = 0; i < 3; i++)
+                Shapes.Create(PrimitiveType.Sphere, "Button", chest, new Vector3(0.05f, 0.3f - i * 0.1f, 0.185f + i * 0.012f), new Vector3(0.015f, 0.015f, 0.008f), collar);
+        }
+
         if (o.goldChain)
         {
             Material gold = rig.Mat(Gold);
@@ -284,6 +302,21 @@ public static class RatModel
             }
         }
 
+        if (o.glasses)
+        {
+            Material frame = rig.Mat(Black);
+            for (int s = -1; s <= 1; s += 2)
+            {
+                var eye = new Vector3(0.09f * s, 0.19f, 0.207f);
+                Shapes.Create(PrimitiveType.Cube, "FrameTop", head, eye + new Vector3(0f, 0.042f, 0f), new Vector3(0.11f, 0.012f, 0.012f), frame);
+                Shapes.Create(PrimitiveType.Cube, "FrameBottom", head, eye + new Vector3(0f, -0.04f, 0f), new Vector3(0.11f, 0.01f, 0.01f), frame);
+                Shapes.Create(PrimitiveType.Cube, "FrameSide", head, eye + new Vector3(-0.055f, 0f, 0f), new Vector3(0.01f, 0.09f, 0.01f), frame);
+                Shapes.Create(PrimitiveType.Cube, "FrameSide", head, eye + new Vector3(0.055f, 0f, 0f), new Vector3(0.01f, 0.09f, 0.01f), frame);
+                Shapes.Create(PrimitiveType.Cube, "Temple", head, new Vector3(0.165f * s, 0.205f, 0.1f), Quaternion.Euler(0f, -12f * s, 0f), new Vector3(0.01f, 0.01f, 0.2f), frame);
+            }
+            Shapes.Create(PrimitiveType.Cube, "Bridge", head, new Vector3(0f, 0.2f, 0.214f), new Vector3(0.04f, 0.01f, 0.01f), frame);
+        }
+
         if (o.earring)
             Shapes.Create(PrimitiveType.Cylinder, "Earring", head, new Vector3(-0.23f, 0.27f, 0.0f), Quaternion.Euler(0f, 0f, 90f), new Vector3(0.05f, 0.006f, 0.05f), rig.Mat(Gold));
 
@@ -311,7 +344,7 @@ public static class RatModel
 
     static RatRig.Limb Arm(Transform chest, float side, RatOutfit o, RatRig rig)
     {
-        Material sleeve = rig.Mat(o.hood ? o.shirt : o.fur);
+        Material sleeve = rig.Mat(o.hood || o.sleeves ? o.shirt : o.fur);
         Material skin = rig.Mat(o.skin);
         var limb = new RatRig.Limb();
 
@@ -323,7 +356,7 @@ public static class RatModel
         limb.middle = Shapes.Pivot("Elbow", limb.upper, new Vector3(0f, -0.24f, 0f));
         Shapes.Create(PrimitiveType.Sphere, "ElbowJoint", limb.middle, Vector3.zero, new Vector3(0.1f, 0.1f, 0.1f), sleeve);
         Shapes.Create(PrimitiveType.Capsule, "Forearm", limb.middle, new Vector3(0f, -0.1f, 0f), new Vector3(0.095f, 0.11f, 0.095f), sleeve);
-        if (o.hood)
+        if (o.hood || o.sleeves)
             Shapes.Create(PrimitiveType.Cylinder, "Cuff", limb.middle, new Vector3(0f, -0.19f, 0f), new Vector3(0.105f, 0.02f, 0.105f), rig.Mat(o.shirt * 0.8f + Color.black * 0.2f));
 
         limb.end = Shapes.Pivot("Wrist", limb.middle, new Vector3(0f, -0.2f, 0f));

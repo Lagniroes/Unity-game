@@ -27,7 +27,17 @@ project has no art assets.
 | Right click / K | Heavy attack (slow, big damage and knockback) |
 | Left Ctrl / Q | Forward roll (same as Shift + Space) |
 | R | Restart the fight |
+| O | Watch the office scene (press again to go back) |
 | Esc / left click | Free / lock the mouse cursor |
+
+## Office scene
+
+Press **O** to cut to a little office where a rat in a shirt, tie and glasses sits at
+a desk and has its morning coffee. The 12-second loop goes like this: typing, reaching
+for the mug, sipping with its eyes closed, a happy "ahh~" with a tail flick, then back
+to work. Movie-style camera cuts and letterbox bars frame it. The code on the monitor
+scrolls while it types, steam rises from the mug, and the wall clock shows your real time.
+The street fight pauses while you watch.
 
 ## Combat system
 
@@ -54,6 +64,8 @@ Assets/Scripts/
   MeleeAttacker.cs      Attack data, combos, input buffering, auto-aim, hit detection
   PlayerController.cs   Player movement, jump, dodge and attack input
   RatAI.cs              Rival rat behaviour
+  OfficeScene.cs        The office set, cinematic camera shots, O-key switch
+  CoffeeRatAnimator.cs  The coffee-drinking animation loop with two-bone arm IK
   ThirdPersonCamera.cs  Orbit camera with collision and screen shake
   Shapes.cs             Primitive/material helpers
   GameInput.cs          Works with both the old and new Unity Input System

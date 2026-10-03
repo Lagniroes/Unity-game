@@ -39,7 +39,7 @@ public class RatAI : MonoBehaviour
     void Update()
     {
         bool gameOver = GameManager.Instance && GameManager.Instance.IsGameOver;
-        bool canAct = !gameOver && !self.IsDead && !self.IsStunned && target && !target.IsDead;
+        bool canAct = !gameOver && !self.IsDead && !self.IsStunned && target && !target.IsDead && !OfficeScene.Viewing;
         Vector3 horizontal = attacker.IsAttacking ? attacker.LungeVelocity : Vector3.zero;
 
         if (canAct)

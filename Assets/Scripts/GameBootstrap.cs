@@ -23,6 +23,7 @@ public static class GameBootstrap
         cam.gameObject.AddComponent<ThirdPersonCamera>();
 
         CityBuilder.Build();
+        OfficeScene.Build(new Vector3(0f, 0f, 600f), cam); // far away, out of sight of the city
 
         var manager = new GameObject("GameManager").AddComponent<GameManager>();
         SpawnFighters(manager);
