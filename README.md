@@ -1,9 +1,9 @@
-# Rat City (Unity)
+# Toxin Hangar (Unity)
 
-A GTA-style 3D street brawler starring rats. You play a grey street rat with a crowbar
-and fight a rival rat, **Big Cheese**, in the middle of a city intersection at sunset.
-Everything (the city, the rats, and their animations) is built from code, so the
-project has no art assets.
+A first-person shooter in the style of the original **Doom**. You fight your way through a
+toxic UAC base full of zombiemen, imps, demons and a cacodemon, find the red keycard and hit
+the exit switch. Everything (the level, every texture, every sprite, the weapons, the status
+bar face and all the sound effects) is generated from code, so the project has no art or audio files.
 
 ## How to open and play
 
@@ -12,74 +12,85 @@ project has no art assets.
    (the one that contains `Assets`, `Packages` and `ProjectSettings`).
 3. Open it. If Hub says the editor version isn't installed, pick the Unity version you
    have (Unity 6 or 2022.3 LTS) and confirm.
-4. Press **Play** ▶.
+4. Press **Play** ▶. The game builds itself in whatever scene is open, even an empty one.
 
 ## Controls
 
 | Key | Action |
 | --- | --- |
-| W A S D | Walk |
-| Hold Left Shift | Run |
-| Space | Jump |
-| Shift + Space | Forward roll (invincible for most of the roll) |
-| Mouse | Look around (scroll to zoom) |
-| Left click / J | Light attack (tap for a 3-hit combo) |
-| Right click / K | Heavy attack (slow, big damage and knockback) |
-| Left Ctrl / Q | Forward roll (same as Shift + Space) |
-| R | Restart the fight |
-| O | Watch the office scene (press again to go back) |
-| Esc / left click | Free / lock the mouse cursor |
+| W A S D / arrow keys | Move and strafe |
+| Mouse | Look around |
+| Hold Shift | Run |
+| Left click / Ctrl | Fire |
+| E / Space | Open doors, press switches |
+| 1 – 5, mouse wheel | Fist, pistol, shotgun, chaingun, rocket launcher |
+| Tab / M | Automap |
+| P | Toggle the chunky retro pixels |
+| R | Restart the level |
+| Esc / click | Free / lock the mouse cursor |
 
-## Office scene
+## What's in it
 
-Press **O** to cut to a little office where a rat in a shirt, tie and glasses sits at
-a desk and has its morning coffee. The 12-second loop goes like this: typing, reaching
-for the mug, sipping with its eyes closed, a happy "ahh~" with a tail flick, then back
-to work. Movie-style camera cuts and letterbox bars frame it. The code on the monitor
-scrolls while it types, steam rises from the mug, and the wall clock shows your real time.
-The street fight pauses while you watch.
-
-## Combat system
-
-- **Attacks** have three phases: windup, active and recovery. Damage lands in the middle of the active part.
-- **Light combo:** Swing → Backhand → Slam. Press again during an attack to buffer the next hit. The Slam finisher launches the enemy.
-- **Heavy attack:** a long windup, then a big overhead smash.
-- **Soft auto-aim:** you turn toward the nearest enemy when you start an attack.
-- **Hit reactions:** hit-stun (interrupts attacks), knockback, a white flash, hit-stop, screen shake and floating damage numbers.
-- **Roll:** a tucked forward roll with invincibility frames. It cancels your current attack, and you keep running out of it if Shift is held.
-- **Anti stun-lock:** after several stuns in a row, the rival gets armor for a moment and fights back.
-- **Rival AI:** runs at you, circles at fighting range, and mixes light combos with heavy attacks. It gets more aggressive below 40% HP.
+- **The level, E1M1: Toxin Hangar.** A start room, a sky-lit courtyard around a pool of toxic
+  slime, an armory, a stair hall with the red keycard on a raised platform, a tech hall behind
+  the red door, and the exit room. There's also one secret to find. The map is ASCII art in
+  `Level.cs`, and it becomes Doom-style sectors with their own floor and ceiling heights: stairs,
+  sunken slime, tall rooms, low corridors and open sky.
+- **Doors.** Doors slide up into the ceiling and close again by themselves. If something is
+  standing in the way they bounce back open. The red door needs the red keycard, and the secret
+  door looks just like the wall around it.
+- **Weapons** with Doom's damage numbers. The fist, the pistol (the first shot is always
+  accurate), the 7-pellet shotgun with its pump animation, the chaingun and the rocket launcher
+  (its splash damage can hurt you too). Shots auto-aim up and down at whatever is in front of you.
+- **Monsters.** The zombieman fires hitscan bullets and drops a clip when it dies. The imp throws
+  fireballs and claws you up close. The demon is fast and bites. The cacodemon floats and spits
+  lightning balls. Monsters sleep until they see you or hear your gunfire. When they can't see you,
+  they find their way around walls and open doors to reach you. Getting hit can stun them
+  ("pain chance"), and they fall over in a death animation.
+- **Items.** Stimpacks, medikits, armor, clips, shells, rockets, the red keycard, weapon pickups,
+  and a soulsphere. There are also explosive barrels, which set each other off in chain reactions.
+- **The look.** The scene is rendered at low resolution with square pixels (press P to turn this
+  off), with dark fog and flickering lights. Sprites are shaded by the lights around them, and
+  the slime glows green under a red sky.
+- **The HUD.** The classic status bar shows ammo, health, the weapons you own, the face, armor,
+  keys and ammo counts. The face looks around, winces when you get hurt, grins at new weapons and
+  gets bloodier as your health drops. You also get pickup messages, red and gold screen flashes,
+  an automap that reveals what you've seen, and an end-of-level screen with your kills, items,
+  secrets and time.
 
 ## Project layout
 
 ```
 Assets/Scripts/
-  GameBootstrap.cs      Creates the camera, city, player rat and rival rat when Play starts
-  GameManager.cs        Fight state, HUD/health bars, damage numbers, hit-stop, slow-mo, restart
-  CityBuilder.cs        Streets, sidewalks, buildings, streetlights, cars, dumpsters, sunset lighting
-  RatModel.cs           Builds a detailed rat (face, knees/elbows, fists, outfit, weapon, ringed tail)
-  RatRig.cs             A rat's joint references and hit flash
-  RatAnimator.cs        Procedural animation: stance, walk/run cycles, jump, swings, stun, roll, KO, tail
-  Combatant.cs          Health, hit-stun, knockback, invincibility, anti stun-lock armor
-  MeleeAttacker.cs      Attack data, combos, input buffering, auto-aim, hit detection
-  PlayerController.cs   Player movement, jump, dodge and attack input
-  RatAI.cs              Rival rat behaviour
-  OfficeScene.cs        The office set, cinematic camera shots, O-key switch
-  CoffeeRatAnimator.cs  The coffee-drinking animation loop with two-bone arm IK
-  ThirdPersonCamera.cs  Orbit camera with collision and screen shake
-  Shapes.cs             Primitive/material helpers
-  GameInput.cs          Works with both the old and new Unity Input System
+  Core/
+    GameBootstrap.cs   Starts the game when Play is pressed (no scene setup needed)
+    GameManager.cs     Rendering setup, level start/restart, stats, messages, screen shake
+    Hud.cs             Weapon view, status bar, face, automap, title/death/intermission screens
+    GameInput.cs       Works with both the old and new Unity Input System
+    Gfx.cs             Matte materials, sprite lighting, flickering lights
+    PixelCanvas.cs     Tiny pixel-art rasterizer (shaded circles, capsules, triangles, glows)
+    RetroCamera.cs     Low-resolution pixelated rendering
+    Sfx.cs             Synthesizes every sound effect from noise and waveforms
+  Art/
+    TextureLibrary.cs  Procedural wall, floor, ceiling, door, switch and slime textures
+    SpriteLibrary.cs   Monster frames, items, effects, first-person weapons, status bar face
+  World/
+    Level.cs           The ASCII map, sectors to meshes, things, secrets, monster pathfinding
+    Door.cs            Sliding doors (normal, red key, secret)
+    Billboard.cs       Camera-facing, light-shaded sprites and one-shot sprite effects
+    Combat.cs          Explosions and splash damage, projectiles, exploding barrels
+    Pickup.cs          Health, armor, ammo, weapons, keys and powerups
+  Actors/
+    Player.cs          Movement, mouse look, health/armor, using things, slime damage
+    WeaponSystem.cs    Weapons, ammo, switching, hitscan and auto-aim, view sprites
+    Monster.cs         Monster types and AI: sight, chase, attacks, pain, death
 ```
 
-## Roadmap
+## Ideas for later
 
-- [x] City background
-- [x] Player rat with a crowbar
-- [x] Rival rat
-- [x] Combat system
-- [ ] Blocking and parrying
-- [ ] More rats (a gang) and waves
-- [ ] Stealing and driving cars
-- [ ] Pedestrians, wanted level, police rats
-- [ ] Missions, cheese as money, weapon pickups
-- [ ] Sound effects and music
+- [ ] More levels (E1M2...) and a level-select screen
+- [ ] Plasma rifle, BFG, chainsaw and berserk pack
+- [ ] More monsters: Baron of Hell, Lost Soul, shotgun guy
+- [ ] Monster infighting
+- [ ] Difficulty levels
+- [ ] Music
